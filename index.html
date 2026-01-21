@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Pendaftaran Siswa</title>
+    <link rel="stylesheet" href="css/website.css">
+    <style></style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div>
+                    <h1><i class="fas fa-graduation-cap"></i> Sistem Pendaftaran Siswa</h1>
+                    <p class="subtitle">Kelola data siswa dengan mudah - Tambah, Edit, Hapus dan Lihat data siswa</p>
+                </div>
+                <div class="logo">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <!-- Form Section -->
+            <section class="form-section">
+                <h2 class="section-title"><i class="fas fa-user-plus"></i> Form Pendaftaran Siswa</h2>
+                <form id="studentForm">
+                    <input type="hidden" id="studentId" value="">
+                    
+                    <div class="form-group">
+                        <label for="nama"><i class="fas fa-user"></i> Nama Lengkap</label>
+                        <input type="text" id="nama" placeholder="Masukkan nama lengkap" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="nisn"><i class="fas fa-id-card"></i> NISN</label>
+                        <input type="text" id="nisn" placeholder="Nomor Induk Siswa Nasional" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="jenis_kelamin"><i class="fas fa-venus-mars"></i> Jenis Kelamin</label>
+                        <select id="jenis_kelamin" required>
+                            <option value="">Pilih Jenis Kelamin</option>
+                            <option value="Laki-laki">Laki-laki</option>
+                            <option value="Perempuan">Perempuan</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tanggal_lahir"><i class="fas fa-birthday-cake"></i> Tanggal Lahir</label>
+                        <input type="date" id="tanggal_lahir" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="alamat"><i class="fas fa-home"></i> Alamat</label>
+                        <input type="text" id="alamat" placeholder="Masukkan alamat lengkap" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="telepon"><i class="fas fa-phone"></i> Telepon</label>
+                        <input type="tel" id="telepon" placeholder="Masukkan nomor telepon" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email"><i class="fas fa-envelope"></i> Email</label>
+                        <input type="email" id="email" placeholder="Masukkan alamat email" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="jurusan"><i class="fas fa-book"></i> Jurusan</label>
+                        <select id="jurusan" required>
+                            <option value="">Pilih Jurusan</option>
+                            <option value="IPA">Ilmu Pengetahuan Alam (IPA)</option>
+                            <option value="IPS">Ilmu Pengetahuan Sosial (IPS)</option>
+                            <option value="Bahasa">Bahasa dan Budaya</option>
+                            <option value="TKJ">Teknik Komputer dan Jaringan</option>
+                            <option value="Multimedia">Multimedia</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" id="submitBtn" class="btn btn-primary">
+                            <i class="fas fa-plus-circle"></i> Tambah Siswa
+                        </button>
+                        <button type="button" id="cancelBtn" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Batal
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- List Section -->
+            <section class="list-section">
+                <h2 class="section-title"><i class="fas fa-list"></i> Daftar Siswa Terdaftar</h2>
+                
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Cari siswa berdasarkan nama, NISN, atau jurusan...">
+                </div>
+                
+                <div class="table-container">
+                    <table id="studentsTable">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Nama</th>
+                                <th>NISN</th>
+                                <th>Jurusan</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentsTableBody">
+                            <!-- Data siswa akan ditampilkan di sini -->
+                        </tbody>
+                    </table>
+                    
+                    <div id="emptyMessage" class="empty-message">
+                        <i class="fas fa-user-slash fa-2x"></i>
+                        <p>Belum ada data siswa. Silakan tambah siswa baru menggunakan form di samping.</p>
+                    </div>
+                </div>
+                
+                <div class="stats">
+                    <div>Total Siswa: <span id="totalStudents">0</span></div>
+                    <div>Jurusan Terbanyak: <span id="topMajor">-</span></div>
+                </div>
+            </section>
+        </div>
+        
+        <footer>
+            <p>Sistem Pendaftaran Siswa &copy; 2023 - Dibuat dengan <i class="fas fa-heart" style="color:#e74c3c;"></i></p>
+        </footer>
+    </div>
+
+    <!-- Notification Element -->
+    <div id="notification" class="notification">
+        <i class="fas fa-check-circle"></i>
+        <span id="notificationText">Data berhasil disimpan!</span>
+    </div>
+
+    <script>
+        // Data siswa (disimulasikan di localStorage)
+        let students = JSON.parse(localStorage.getItem('students')) || [];
+        let editMode = false;
+        let currentEditId = null;
+
+        // Elemen DOM
+        const studentForm = document.getElementById('studentForm');
+        const studentsTableBody = document.getElementById('studentsTableBody');
+        const emptyMessage = document.getElementById('emptyMessage');
+        const totalStudentsSpan = document.getElementById('totalStudents');
+        const topMajorSpan = document.getElementById('topMajor');
+        const searchInput = document.getElementById('searchInput');
+        const submitBtn = document.getElementById('submitBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const notification = document.getElementById('notification');
+        const notificationText = document.getElementById('notificationText');
+
+        // Inisialisasi
+        document.addEventListener('DOMContentLoaded', function() {
+            renderTable();
+            updateStats();
+            
+            // Submit form
+            studentForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveStudent();
+            });
+            
+            // Batalkan edit
+            cancelBtn.addEventListener('click', resetForm);
+            
+            // Pencarian
+            searchInput.addEventListener('input', function() {
+                renderTable(this.value);
+            });
+        });
+
+        // Simpan siswa (tambah atau edit)
+        function saveStudent() {
+            // Ambil nilai dari form
+            const student = {
+                id: editMode ? currentEditId : Date.now().toString(),
+                nama: document.getElementById('nama').value,
+                nisn: document.getElementById('nisn').value,
+                jenis_kelamin: document.getElementById('jenis_kelamin').value,
+                tanggal_lahir: document.getElementById('tanggal_lahir').value,
+                alamat: document.getElementById('alamat').value,
+                telepon: document.getElementById('telepon').value,
+                email: document.getElementById('email').value,
+                jurusan: document.getElementById('jurusan').value
+            };
+            
+            // Validasi sederhana
+            if (!student.nama || !student.nisn || !student.jurusan) {
+                showNotification('Harap isi semua field yang diperlukan!', 'error');
+                return;
+            }
+            
+            if (editMode) {
+                // Update siswa yang sudah ada
+                const index = students.findIndex(s => s.id === currentEditId);
+                if (index !== -1) {
+                    students[index] = student;
+                    showNotification('Data siswa berhasil diperbarui!', 'success');
+                }
+            } else {
+                // Tambah siswa baru
+                // Cek apakah NISN sudah ada
+                const existingStudent = students.find(s => s.nisn === student.nisn);
+                if (existingStudent) {
+                    showNotification('NISN sudah terdaftar!', 'error');
+                    return;
+                }
+                
+                students.push(student);
+                showNotification('Siswa baru berhasil ditambahkan!', 'success');
+            }
+            
+            // Simpan ke localStorage
+            localStorage.setItem('students', JSON.stringify(students));
+            
+            // Reset form dan render ulang tabel
+            resetForm();
+            renderTable();
+            updateStats();
+        }
+
+        // Render tabel siswa
+        function renderTable(searchTerm = '') {
+            let filteredStudents = students;
+            
+            // Filter berdasarkan pencarian
+            if (searchTerm) {
+                const term = searchTerm.toLowerCase();
+                filteredStudents = students.filter(student => 
+                    student.nama.toLowerCase().includes(term) ||
+                    student.nisn.toLowerCase().includes(term) ||
+                    student.jurusan.toLowerCase().includes(term)
+                );
+            }
+            
+            // Kosongkan tabel
+            studentsTableBody.innerHTML = '';
+            
+            // Tampilkan pesan jika tidak ada data
+            if (filteredStudents.length === 0) {
+                emptyMessage.style.display = 'block';
+                return;
+            }
+            
+            // Sembunyikan pesan kosong
+            emptyMessage.style.display = 'none';
+            
+            // Isi tabel dengan data
+            filteredStudents.forEach((student, index) => {
+                const row = document.createElement('tr');
+                
+                // Format tanggal lahir
+                const formattedDate = student.tanggal_lahir ? 
+                    new Date(student.tanggal_lahir).toLocaleDateString('id-ID') : '-';
+                
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>
+                        <strong>${student.nama}</strong><br>
+                        <small>${student.jenis_kelamin} | Lahir: ${formattedDate}</small>
+                    </td>
+                    <td>${student.nisn}</td>
+                    <td><span class="badge">${student.jurusan}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button onclick="editStudent('${student.id}')" class="btn btn-sm btn-success">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button onclick="deleteStudent('${student.id}')" class="btn btn-sm btn-danger">
+                                <i class="fas fa-trash-alt"></i> Hapus
+                            </button>
+                            <button onclick="viewStudent('${student.id}')" class="btn btn-sm btn-primary">
+                                <i class="fas fa-eye"></i> Lihat
+                            </button>
+                        </div>
+                    </td>
+                `;
+                
+                studentsTableBody.appendChild(row);
+            });
+        }
+
+        // Edit siswa
+        function editStudent(id) {
+            const student = students.find(s => s.id === id);
+            
+            if (student) {
+                // Isi form dengan data siswa
+                document.getElementById('studentId').value = student.id;
+                document.getElementById('nama').value = student.nama;
+                document.getElementById('nisn').value = student.nisn;
+                document.getElementById('jenis_kelamin').value = student.jenis_kelamin;
+                document.getElementById('tanggal_lahir').value = student.tanggal_lahir;
+                document.getElementById('alamat').value = student.alamat;
+                document.getElementById('telepon').value = student.telepon;
+                document.getElementById('email').value = student.email;
+                document.getElementById('jurusan').value = student.jurusan;
+                
+                // Ubah mode ke edit
+                editMode = true;
+                currentEditId = id;
+                submitBtn.innerHTML = '<i class="fas fa-save"></i> Simpan Perubahan';
+                submitBtn.className = 'btn btn-success';
+                
+                // Scroll ke form
+                document.querySelector('.form-section').scrollIntoView({ behavior: 'smooth' });
+                
+                showNotification('Siap mengedit data siswa. Perubahan Anda akan disimpan.', 'info');
+            }
+        }
+
+        // Hapus siswa
+        function deleteStudent(id) {
+            if (confirm('Apakah Anda yakin ingin menghapus data siswa ini?')) {
+                students = students.filter(s => s.id !== id);
+                localStorage.setItem('students', JSON.stringify(students));
+                
+                renderTable();
+                updateStats();
+                showNotification('Data siswa berhasil dihapus!', 'success');
+                
+                // Jika sedang mengedit siswa yang dihapus, reset form
+                if (editMode && currentEditId === id) {
+                    resetForm();
+                }
+            }
+        }
+
+        // Lihat detail siswa
+        function viewStudent(id) {
+            const student = students.find(s => s.id === id);
+            
+            if (student) {
+                // Format tanggal lahir
+                const formattedDate = student.tanggal_lahir ? 
+                    new Date(student.tanggal_lahir).toLocaleDateString('id-ID', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    }) : '-';
+                
+                // Tampilkan detail siswa dalam alert
+                const detail = `
+                    Detail Siswa:
+                    
+                    Nama: ${student.nama}
+                    NISN: ${student.nisn}
+                    Jenis Kelamin: ${student.jenis_kelamin}
+                    Tanggal Lahir: ${formattedDate}
+                    Alamat: ${student.alamat}
+                    Telepon: ${student.telepon}
+                    Email: ${student.email}
+                    Jurusan: ${student.jurusan}
+                `;
+                
+                alert(detail);
+            }
+        }
+
+        // Reset form
+        function resetForm() {
+            studentForm.reset();
+            document.getElementById('studentId').value = '';
+            editMode = false;
+            currentEditId = null;
+            submitBtn.innerHTML = '<i class="fas fa-plus-circle"></i> Tambah Siswa';
+            submitBtn.className = 'btn btn-primary';
+        }
+
+        // Update statistik
+        function updateStats() {
+            // Update total siswa
+            totalStudentsSpan.textContent = students.length;
+            
+            // Hitung jurusan terbanyak
+            if (students.length > 0) {
+                const majors = students.map(s => s.jurusan);
+                const majorCounts = {};
+                
+                majors.forEach(major => {
+                    majorCounts[major] = (majorCounts[major] || 0) + 1;
+                });
+                
+                const topMajor = Object.keys(majorCounts).reduce((a, b) => 
+                    majorCounts[a] > majorCounts[b] ? a : b
+                );
+                
+                topMajorSpan.textContent = topMajor;
+            } else {
+                topMajorSpan.textContent = '-';
+            }
+        }
+
+        // Tampilkan notifikasi
+        function showNotification(message, type = 'info') {
+            notificationText.textContent = message;
+            notification.className = `notification ${type}`;
+            
+            // Tampilkan notifikasi
+            notification.classList.add('show');
+            
+            // Sembunyikan setelah 3 detik
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Tambahkan beberapa data contoh saat pertama kali dijalankan
+        if (students.length === 0) {
+            const exampleStudents = [
+                {
+                    id: "1",
+                    nama: "Ahmad Rizki",
+                    nisn: "2023001",
+                    jenis_kelamin: "Laki-laki",
+                    tanggal_lahir: "2007-05-15",
+                    alamat: "Jl. Merdeka No. 123, Jakarta",
+                    telepon: "08123456789",
+                    email: "ahmad@gmail.com",
+                    jurusan: "IPA"
+                },
+                {
+                    id: "2",
+                    nama: "Sari Dewi",
+                    nisn: "2023002",
+                    jenis_kelamin: "Perempuan",
+                    tanggal_lahir: "2008-03-22",
+                    alamat: "Jl. Sudirman No. 45, Bandung",
+                    telepon: "08234567890",
+                    email: "sari@gmail.com",
+                    jurusan: "IPS"
+                },
+                {
+                    id: "3",
+                    nama: "Budi Santoso",
+                    nisn: "2023003",
+                    jenis_kelamin: "Laki-laki",
+                    tanggal_lahir: "2007-11-10",
+                    alamat: "Jl. Pahlawan No. 67, Surabaya",
+                    telepon: "08345678901",
+                    email: "budi@gmail.com",
+                    jurusan: "TKJ"
+                }
+            ];
+            
+            students = exampleStudents;
+            localStorage.setItem('students', JSON.stringify(students));
+            renderTable();
+            updateStats();
+        }
+    </script>
+</body>
+</html>
